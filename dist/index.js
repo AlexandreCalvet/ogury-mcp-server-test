@@ -38,17 +38,142 @@ class OguryMCPServer {
         // MCP endpoint
         this.app.post('/mcp', async (req, res) => {
             try {
-                // For now, just return a simple response
-                // The MCP SDK doesn't have a direct handleRequest method
-                res.json({
-                    status: 'ok',
-                    message: 'Ogury MCP Server is running',
-                    availableTools: ['get_campaign_details', 'get_campaigns_report']
-                });
+                const { method, params, id } = req.body;
+                switch (method) {
+                    case 'tools/list':
+                        // Return the list of available tools
+                        res.json({
+                            jsonrpc: '2.0',
+                            id: id || 1,
+                            result: {
+                                tools: [
+                                    {
+                                        name: 'get_campaign_details',
+                                        description: 'Get campaign performance details by campaign ID',
+                                        inputSchema: {
+                                            type: 'object',
+                                            properties: {
+                                                campaignId: {
+                                                    type: 'number',
+                                                    description: 'The campaign ID to retrieve details for',
+                                                },
+                                                startDate: {
+                                                    type: 'string',
+                                                    description: 'Start date in YYYY-MM-DD format (required)',
+                                                },
+                                                endDate: {
+                                                    type: 'string',
+                                                    description: 'End date in YYYY-MM-DD format (required)',
+                                                },
+                                                accountId: {
+                                                    type: 'string',
+                                                    description: 'Optional account ID filter',
+                                                },
+                                                brandId: {
+                                                    type: 'string',
+                                                    description: 'Optional brand ID filter',
+                                                },
+                                            },
+                                            required: ['campaignId', 'startDate', 'endDate'],
+                                        },
+                                    },
+                                    {
+                                        name: 'get_campaigns_report',
+                                        description: 'Get campaign performance report with flexible filtering',
+                                        inputSchema: {
+                                            type: 'object',
+                                            properties: {
+                                                startDate: {
+                                                    type: 'string',
+                                                    description: 'Start date in YYYY-MM-DD format (required)',
+                                                },
+                                                endDate: {
+                                                    type: 'string',
+                                                    description: 'End date in YYYY-MM-DD format (required)',
+                                                },
+                                                accountId: {
+                                                    type: 'string',
+                                                    description: 'Account IDs (comma-separated)',
+                                                },
+                                                brandId: {
+                                                    type: 'string',
+                                                    description: 'Brand ID',
+                                                },
+                                                campaignId: {
+                                                    type: 'number',
+                                                    description: 'Campaign ID',
+                                                },
+                                                identifier1: {
+                                                    type: 'string',
+                                                    description: 'External identifier 1',
+                                                },
+                                                identifier2: {
+                                                    type: 'string',
+                                                    description: 'External identifier 2',
+                                                },
+                                                identifier3: {
+                                                    type: 'string',
+                                                    description: 'External identifier 3',
+                                                },
+                                            },
+                                            required: ['startDate', 'endDate'],
+                                        },
+                                    },
+                                ],
+                            },
+                        });
+                        break;
+                    case 'tools/call':
+                        // Handle tool calls
+                        const { name, arguments: args } = params;
+                        try {
+                            let result;
+                            switch (name) {
+                                case 'get_campaign_details':
+                                    result = await this.getCampaignDetails(args);
+                                    break;
+                                case 'get_campaigns_report':
+                                    result = await this.getCampaignsReport(args);
+                                    break;
+                                default:
+                                    throw new Error(`Unknown tool: ${name}`);
+                            }
+                            res.json({
+                                jsonrpc: '2.0',
+                                id: id || 1,
+                                result: result,
+                            });
+                        }
+                        catch (error) {
+                            res.json({
+                                jsonrpc: '2.0',
+                                id: id || 1,
+                                error: {
+                                    code: -32603,
+                                    message: error instanceof Error ? error.message : 'Unknown error occurred',
+                                },
+                            });
+                        }
+                        break;
+                    default:
+                        res.status(400).json({
+                            jsonrpc: '2.0',
+                            id: id || 1,
+                            error: {
+                                code: -32601,
+                                message: `Unsupported method: ${method}`,
+                            },
+                        });
+                }
             }
             catch (error) {
                 res.status(500).json({
-                    error: error instanceof Error ? error.message : 'Unknown error'
+                    jsonrpc: '2.0',
+                    id: req.body.id || 1,
+                    error: {
+                        code: -32603,
+                        message: error instanceof Error ? error.message : 'Unknown error',
+                    },
                 });
             }
         });

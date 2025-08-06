@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "ogury": {
+      "url": "https://ogury-mcp-server-test-production.up.railway.app/mcp"
+    }
+  }
+}
