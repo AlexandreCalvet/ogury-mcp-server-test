@@ -91,8 +91,27 @@ class OguryMCPServer {
     this.app.post('/mcp', async (req, res) => {
       try {
         const { method, params, id } = req.body;
+        console.error(`[LOG] MCP request: ${method}`, JSON.stringify(req.body));
         
         switch (method) {
+          case 'initialize':
+            // Handle initialization request
+            res.json({
+              jsonrpc: '2.0',
+              id: id || 1,
+              result: {
+                protocolVersion: '2024-11-05',
+                capabilities: {
+                  tools: {}
+                },
+                serverInfo: {
+                  name: 'ogury-mcp-server',
+                  version: '0.1.0'
+                }
+              }
+            });
+            break;
+            
           case 'tools/list':
             // Return the list of available tools
             res.json({
