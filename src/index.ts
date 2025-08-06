@@ -54,8 +54,6 @@ class OguryMCPServer {
       {
         name: 'ogury-mcp-server',
         version: '0.1.0',
-      },
-      {
         capabilities: {
           tools: {},
         },
