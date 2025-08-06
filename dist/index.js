@@ -342,31 +342,42 @@ class OguryMCPServer {
                 throw new Error(`API request failed: ${response.status} ${response.statusText}`);
             }
             const campaignData = await response.json();
+            // Safe number formatting with null checks
+            const formatNumber = (value) => {
+                if (value === null || value === undefined)
+                    return 'N/A';
+                return typeof value === 'number' ? value.toLocaleString() : String(value);
+            };
+            const formatPercentage = (value) => {
+                if (value === null || value === undefined)
+                    return 'N/A';
+                return typeof value === 'number' ? `${value}%` : String(value);
+            };
             return {
                 content: [
                     {
                         type: 'text',
                         text: `Campaign Details for ID ${args.campaignId}:
 
-Campaign: ${campaignData.campaign}
-Brand: ${campaignData.brand}
-Strategy: ${campaignData.strategy}
-Cost Model: ${campaignData.costModel}
-Campaign Goal: ${campaignData.campaignGoal}
+Campaign: ${campaignData.campaign || 'N/A'}
+Brand: ${campaignData.brand || 'N/A'}
+Strategy: ${campaignData.strategy || 'N/A'}
+Cost Model: ${campaignData.costModel || 'N/A'}
+Campaign Goal: ${campaignData.campaignGoal || 'N/A'}
 
 Performance Metrics:
-• Impressions: ${campaignData.impressions.toLocaleString()}
-• Clicks: ${campaignData.clicks.toLocaleString()}
-• CTR: ${campaignData.ctr}%
-• Video Completes: ${campaignData.videoCompletes.toLocaleString()}
-• VTR: ${campaignData.vtr}%
-• Engagement: ${campaignData.engagement.toLocaleString()}
-• Engagement Rate: ${campaignData.engagementRate}%
-• Reach: ${campaignData.reach.toLocaleString()}
-• Frequency: ${campaignData.frequency}
+• Impressions: ${formatNumber(campaignData.impressions)}
+• Clicks: ${formatNumber(campaignData.clicks)}
+• CTR: ${formatPercentage(campaignData.ctr)}
+• Video Completes: ${formatNumber(campaignData.videoCompletes)}
+• VTR: ${formatPercentage(campaignData.vtr)}
+• Engagement: ${formatNumber(campaignData.engagement)}
+• Engagement Rate: ${formatPercentage(campaignData.engagementRate)}
+• Reach: ${formatNumber(campaignData.reach)}
+• Frequency: ${formatNumber(campaignData.frequency)}
 
 Financial:
-• Spend: ${campaignData.spend.toLocaleString()} ${campaignData.currency}
+• Spend: ${formatNumber(campaignData.spend)} ${campaignData.currency || ''}
 
 ${campaignData.identifier1 ? `External ID 1: ${campaignData.identifier1}` : ''}
 ${campaignData.identifier2 ? `External ID 2: ${campaignData.identifier2}` : ''}
@@ -412,10 +423,21 @@ Date Range: ${args.startDate} to ${args.endDate}`,
             }
             const campaignData = await response.json();
             const campaigns = Array.isArray(campaignData) ? campaignData : [campaignData];
-            const report = campaigns.map(campaign => `Campaign ID: ${campaign.campaignId} | ${campaign.campaign}
-Brand: ${campaign.brand} | Strategy: ${campaign.strategy}
-Impressions: ${campaign.impressions.toLocaleString()} | Clicks: ${campaign.clicks.toLocaleString()} | CTR: ${campaign.ctr}%
-Spend: ${campaign.spend.toLocaleString()} ${campaign.currency} | Reach: ${campaign.reach.toLocaleString()}
+            // Safe number formatting with null checks
+            const formatNumber = (value) => {
+                if (value === null || value === undefined)
+                    return 'N/A';
+                return typeof value === 'number' ? value.toLocaleString() : String(value);
+            };
+            const formatPercentage = (value) => {
+                if (value === null || value === undefined)
+                    return 'N/A';
+                return typeof value === 'number' ? `${value}%` : String(value);
+            };
+            const report = campaigns.map(campaign => `Campaign ID: ${campaign.campaignId || 'N/A'} | ${campaign.campaign || 'N/A'}
+Brand: ${campaign.brand || 'N/A'} | Strategy: ${campaign.strategy || 'N/A'}
+Impressions: ${formatNumber(campaign.impressions)} | Clicks: ${formatNumber(campaign.clicks)} | CTR: ${formatPercentage(campaign.ctr)}
+Spend: ${formatNumber(campaign.spend)} ${campaign.currency || ''} | Reach: ${formatNumber(campaign.reach)}
 `).join('\n---\n');
             return {
                 content: [
