@@ -77,6 +77,16 @@ class OguryMCPServer {
       res.json({ status: 'ok', server: 'ogury-mcp-server' });
     });
 
+    // Handle GET requests to /mcp (some clients might try this)
+    this.app.get('/mcp', (req, res) => {
+      res.json({
+        status: 'ok',
+        message: 'Ogury MCP Server is running',
+        endpoint: 'Use POST /mcp for MCP requests',
+        availableMethods: ['tools/list', 'tools/call']
+      });
+    });
+
     // MCP endpoint
     this.app.post('/mcp', async (req, res) => {
       try {
