@@ -342,12 +342,18 @@ class OguryMCPServer {
   }
 
   private async getAccessToken(): Promise<string> {
+    console.error(`[LOG] getAccessToken called`);
+    console.error(`[LOG] Client ID: ${this.clientId ? 'SET' : 'NOT SET'}`);
+    console.error(`[LOG] Client Secret: ${this.clientSecret ? 'SET' : 'NOT SET'}`);
+    
     // Check if token is still valid (with 5 minute buffer)
     if (this.accessToken && this.tokenExpiry && Date.now() < this.tokenExpiry - 300000) {
+      console.error(`[LOG] Using cached token`);
       return this.accessToken;
     }
 
     const credentials = Buffer.from(`${this.clientId}:${this.clientSecret}`).toString('base64');
+    console.error(`[LOG] Making auth request to: ${this.baseUrl}/oauth2/token`);
     
     try {
       const response = await fetch(`${this.baseUrl}/oauth2/token`, {
@@ -359,16 +365,23 @@ class OguryMCPServer {
         body: 'grant_type=client_credentials',
       });
 
+      console.error(`[LOG] Auth response status: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[LOG] Auth error response: ${errorText}`);
         throw new Error(`Authentication failed: ${response.status} ${response.statusText}`);
       }
 
       const authData: AuthResponse = await response.json();
+      console.error(`[LOG] Auth successful, token expires in: ${authData.expires_in} seconds`);
+      
       this.accessToken = authData.access_token;
       this.tokenExpiry = Date.now() + (authData.expires_in * 1000);
       
       return this.accessToken;
     } catch (error) {
+      console.error(`[LOG] Auth error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       throw new Error(`Failed to get access token: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -380,7 +393,10 @@ class OguryMCPServer {
     accountId?: string;
     brandId?: string;
   }) {
+    console.error(`[LOG] getCampaignDetails called with args:`, JSON.stringify(args));
+    
     const token = await this.getAccessToken();
+    console.error(`[LOG] Got access token: ${token ? 'YES' : 'NO'}`);
     
     const params = new URLSearchParams({
       startDate: args.startDate,
@@ -391,8 +407,11 @@ class OguryMCPServer {
     if (args.accountId) params.append('accountId', args.accountId);
     if (args.brandId) params.append('brandId', args.brandId);
 
+    const url = `${this.baseUrl}/v1/reporting/campaigns?${params}`;
+    console.error(`[LOG] Making API request to: ${url}`);
+
     try {
-      const response = await fetch(`${this.baseUrl}/v1/reporting/campaigns?${params}`, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -400,11 +419,19 @@ class OguryMCPServer {
         },
       });
 
+      console.error(`[LOG] API response status: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[LOG] API error response: ${errorText}`);
         throw new Error(`API request failed: ${response.status} ${response.statusText}`);
       }
 
-      const campaignData: CampaignReport = await response.json();
+      const responseText = await response.text();
+      console.error(`[LOG] API response body: ${responseText}`);
+      
+      const campaignData: CampaignReport = JSON.parse(responseText);
+      console.error(`[LOG] Parsed campaign data:`, JSON.stringify(campaignData));
       
       // Safe number formatting with null checks
       const formatNumber = (value: any) => {
