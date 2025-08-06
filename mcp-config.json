@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ogury": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "env": {
+        "OGURY_CLIENT_ID": "your_ogury_client_id_here",
+        "OGURY_CLIENT_SECRET": "your_ogury_client_secret_here"
+      }
+    }
+  }
+}

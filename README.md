@@ -31,13 +31,51 @@ accountId (optional): Account IDs (comma-separated)
 brandId (optional): Brand ID
 campaignId (optional): Specific campaign ID
 identifier1/2/3 (optional): External identifiers
-Setup
-Environment Variables
+## Setup
+
+### MCP Client Configuration
+
+To use this MCP server with an MCP client (like Claude Desktop), create a configuration file:
+
+**mcp-config.json:**
+```json
+{
+  "mcpServers": {
+    "ogury": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "env": {
+        "OGURY_CLIENT_ID": "your_ogury_client_id_here",
+        "OGURY_CLIENT_SECRET": "your_ogury_client_secret_here"
+      }
+    }
+  }
+}
+```
+
+**For deployed servers (Railway), use:**
+```json
+{
+  "mcpServers": {
+    "ogury": {
+      "command": "node",
+      "args": ["dist/index.js"],
+      "env": {
+        "OGURY_CLIENT_ID": "your_ogury_client_id_here",
+        "OGURY_CLIENT_SECRET": "your_ogury_client_secret_here"
+      }
+    }
+  }
+}
+```
+
+### Environment Variables
 Create a .env file with your Ogury API credentials:
 
-env
+```env
 OGURY_CLIENT_ID=your_client_id_here
 OGURY_CLIENT_SECRET=your_client_secret_here
+```
 Local Development
 Install dependencies:
 bash

@@ -1,5 +1,7 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import express from 'express';
+import cors from 'cors';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -36,6 +38,7 @@ interface CampaignReport {
 
 class OguryMCPServer {
   private server: Server;
+  private app: express.Application;
   private accessToken: string | null = null;
   private tokenExpiry: number | null = null;
   private readonly baseUrl = 'https://api.ogury.com';
@@ -60,7 +63,36 @@ class OguryMCPServer {
       }
     );
 
+    this.app = express();
+    this.setupExpress();
     this.setupToolHandlers();
+  }
+
+  private setupExpress() {
+    this.app.use(cors());
+    this.app.use(express.json());
+
+    // Health check endpoint
+    this.app.get('/health', (req, res) => {
+      res.json({ status: 'ok', server: 'ogury-mcp-server' });
+    });
+
+    // MCP endpoint
+    this.app.post('/mcp', async (req, res) => {
+      try {
+        // For now, just return a simple response
+        // The MCP SDK doesn't have a direct handleRequest method
+        res.json({ 
+          status: 'ok', 
+          message: 'Ogury MCP Server is running',
+          availableTools: ['get_campaign_details', 'get_campaigns_report']
+        });
+      } catch (error) {
+        res.status(500).json({
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    });
   }
 
   private setupToolHandlers() {
@@ -339,9 +371,18 @@ Total campaigns: ${campaigns.length}`,
   }
 
   async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    console.error('Ogury MCP server running on stdio');
+    // Check if we should run HTTP server (for Railway deployment)
+    if (process.env.PORT) {
+      const port = process.env.PORT || 3000;
+      this.app.listen(port, () => {
+        console.error(`Ogury MCP HTTP server running on port ${port}`);
+      });
+    } else {
+      // Run stdio server for local development
+      const transport = new StdioServerTransport();
+      await this.server.connect(transport);
+      console.error('Ogury MCP server running on stdio');
+    }
   }
 }
 
