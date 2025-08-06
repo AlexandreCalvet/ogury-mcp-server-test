@@ -6,8 +6,8 @@
     "type": "module",
     "scripts": {
       "build": "tsc",
-      "start": "node dist/index-stdio.js",
-      "dev": "tsx src/index-stdio.ts",
+      "start": "node dist/index.js",
+      "dev": "tsx src/index.ts",
       "clean": "rm -rf dist"
     },
     "dependencies": {
